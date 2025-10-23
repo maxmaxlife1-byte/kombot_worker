@@ -1,4 +1,4 @@
-# handler.py - Final version with Image-to-Image support
+# handler.py - Final Corrected Version with Payload Fix
 
 import os
 import requests
@@ -6,53 +6,54 @@ import runpod
 
 # Define the two different API endpoints from fal.ai
 TEXT_TO_IMAGE_URL = "https://fal.run/fal-ai/bytedance/seedream/v4/text-to-image"
-IMAGE_TO_IMAGE_URL = "https://fal.run/fal-ai/bytedance/seedream/v4/edit" # <-- The new endpoint for editing
+IMAGE_TO_IMAGE_URL = "https://fal.run/fal-ai/bytedance/seedream/v4/edit"
 
 def call_fal_api(job_input):
     """
-    This function now intelligently decides which fal.ai endpoint to call
-    based on whether an image_url is provided in the input.
+    This function now constructs the correct, nested payload for the fal.ai API.
     """
     fal_key = os.environ.get("FAL_KEY")
     if not fal_key:
         raise ValueError("FAL_KEY environment variable not set on RunPod.")
 
-    # --- NEW: Check if this is an image-to-image job ---
-    is_img2img = 'image_url' in job_input and job_input['image_url'] is not None
+    is_img2img = 'image_url' in job_input and job_input.get('image_url')
 
-    # --- NEW: Set the API URL and payload based on the job type ---
     if is_img2img:
+        print("Image-to-Image request detected.")
         api_url = IMAGE_TO_IMAGE_URL
-        # The payload for img2img requires the image_url
+        # --- BUG FIX: Payload is now correctly nested inside an "input" object ---
         payload = {
-            "prompt": job_input.get('prompt'),
-            "image_url": job_input.get('image_url')
+            "input": {
+                "prompt": job_input.get('prompt'),
+                "image_url": job_input.get('image_url')
+            }
         }
     else:
+        print("Text-to-Image request detected.")
         api_url = TEXT_TO_IMAGE_URL
-        # The payload for text2img is simpler
+        # --- BUG FIX: Payload is now correctly nested inside an "input" object ---
         payload = {
-            "prompt": job_input.get('prompt'),
-            "width": job_input.get('width', 1024),
-            "height": job_input.get('height', 1024)
+            "input": {
+                "prompt": job_input.get('prompt'),
+                "width": job_input.get('width', 1024),
+                "height": job_input.get('height', 1024)
+            }
         }
     
-    # You can add more parameters to the payload here (see Part 4)
-
     headers = {"Authorization": f"Key {fal_key}", "Content-Type": "application/json"}
     
+    print(f"Sending request to: {api_url}")
     response = requests.post(api_url, json=payload, headers=headers, timeout=120)
     response.raise_for_status()
     
     data = response.json()
     
-    # fal.ai returns the image in a slightly different place for each endpoint
+    # Standardize image URL extraction
+    image_url = None
     if "images" in data and data["images"]:
         image_url = data["images"][0].get("url")
     elif "image" in data and isinstance(data["image"], dict):
         image_url = data["image"].get("url")
-    else:
-        image_url = None
 
     if not image_url:
         raise RuntimeError(f"API response did not contain an image URL. Full response: {data}")
@@ -61,7 +62,7 @@ def call_fal_api(job_input):
 
 def handler(job):
     """
-    This is the main handler function. It doesn't need many changes.
+    Main handler function.
     """
     job_input = job.get('input', {})
     
@@ -72,7 +73,8 @@ def handler(job):
         result = call_fal_api(job_input)
         return result
     except Exception as e:
+        print(f"ERROR: {e}")
         return {"error": str(e)}
 
-# This starts the worker as per the official guide
+# Start the worker
 runpod.serverless.start({"handler": handler})
