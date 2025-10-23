@@ -21,7 +21,7 @@ def call_fal_api(job_input):
         api_url = IMAGE_TO_IMAGE_URL
         payload = {
             "prompt": job_input.get('prompt'),
-            "image_url": job_input.get('image_url')
+            "image_urls": [ job_input.get('image_url') ]
         }
     else:
         api_url = TEXT_TO_IMAGE_URL
