@@ -1,4 +1,4 @@
-FROM runpod/base:python3.10-cuda11.8.0-devel
+FROM python:3.9-slim
 
 WORKDIR /app
 COPY worker-requirements.txt ./ 
