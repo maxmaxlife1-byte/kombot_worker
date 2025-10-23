@@ -1,11 +1,17 @@
-FROM runpod/base:0.4.0
+# Use Python 3.9 slim image as the base
+FROM python:3.9-slim
 
+# Set the working directory in the container
 WORKDIR /app
-COPY worker-requirements.txt ./ 
-RUN pip install --no-cache-dir -r worker-requirements.txt
-COPY handler.py ./
 
-ENV RUNPOD_HANDLER=handler.handler
+# Copy the requirements file
+COPY requirements.txt .
 
-# Use the modern, official command to run the worker
-CMD ["python", "-m", "runpod.serverless.worker"]
+# Install the Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy your handler code
+COPY handler.py .
+
+# Command to run when the container starts, from the official guide
+CMD [ "python", "-u", "handler.py" ]
