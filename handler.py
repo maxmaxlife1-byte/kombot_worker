@@ -1,5 +1,3 @@
-# handler.py - Final Corrected Version with Payload Fix
-
 import os
 import requests
 import runpod
@@ -10,39 +8,35 @@ IMAGE_TO_IMAGE_URL = "https://fal.run/fal-ai/bytedance/seedream/v4/edit"
 
 def call_fal_api(job_input):
     """
-    This function now constructs the correct, nested payload for the fal.ai API.
+    This function constructs the correct payload for the fal.ai API.
     """
     fal_key = os.environ.get("FAL_KEY")
     if not fal_key:
         raise ValueError("FAL_KEY environment variable not set on RunPod.")
 
     is_img2img = 'image_url' in job_input and job_input.get('image_url')
-
+    
+    # --- THIS IS THE FINAL, CORRECT PAYLOAD STRUCTURE ---
     if is_img2img:
-        print("Image-to-Image request detected.")
         api_url = IMAGE_TO_IMAGE_URL
-        # --- BUG FIX: Payload is now correctly nested inside an "input" object ---
         payload = {
-            "input": {
-                "prompt": job_input.get('prompt'),
-                "image_url": job_input.get('image_url')
-            }
+            "prompt": job_input.get('prompt'),
+            "image_url": job_input.get('image_url')
         }
     else:
-        print("Text-to-Image request detected.")
         api_url = TEXT_TO_IMAGE_URL
-        # --- BUG FIX: Payload is now correctly nested inside an "input" object ---
         payload = {
-            "input": {
-                "prompt": job_input.get('prompt'),
-                "width": job_input.get('width', 1024),
-                "height": job_input.get('height', 1024)
-            }
+            "prompt": job_input.get('prompt'),
+            "width": job_input.get('width', 1024),
+            "height": job_input.get('height', 1024)
         }
+    
+    # NOTE: The fal.ai API expects the payload to be flat. The "/v4/..." endpoints
+    # are a newer, simpler style that do not use the nested "input" object.
     
     headers = {"Authorization": f"Key {fal_key}", "Content-Type": "application/json"}
     
-    print(f"Sending request to: {api_url}")
+    print(f"Sending request to: {api_url} with payload: {payload}")
     response = requests.post(api_url, json=payload, headers=headers, timeout=120)
     response.raise_for_status()
     
@@ -61,9 +55,7 @@ def call_fal_api(job_input):
     return {"image_url": image_url}
 
 def handler(job):
-    """
-    Main handler function.
-    """
+    """ Main handler function. """
     job_input = job.get('input', {})
     
     if 'prompt' not in job_input:
