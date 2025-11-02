@@ -14,7 +14,7 @@ def call_fal_api(job_input):
     if not fal_key:
         raise ValueError("FAL_KEY environment variable not set on RunPod.")
 
-    is_img2img = 'image_url' in job_input and job_input.get('image_url')
+    is_img2img = 'image_urls' in job_input and job_input.get('image_urls')
     
     # --- THIS IS THE FINAL, CORRECT PAYLOAD STRUCTURE ---
     if is_img2img:
@@ -33,7 +33,7 @@ def call_fal_api(job_input):
     
     # NOTE: The fal.ai API expects the payload to be flat. The "/v4/..." endpoints
     # are a newer, simpler style that do not use the nested "input" object.
-    
+    payload["enable_safety_checker"] = False
     headers = {"Authorization": f"Key {fal_key}", "Content-Type": "application/json"}
     
     print(f"Sending request to: {api_url} with payload: {payload}")
