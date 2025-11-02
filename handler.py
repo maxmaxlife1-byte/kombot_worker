@@ -8,41 +8,42 @@ IMAGE_TO_IMAGE_URL = "https://fal.run/fal-ai/bytedance/seedream/v4/edit"
 
 def call_fal_api(job_input):
     """
-    This function constructs the correct payload for the fal.ai API.
+    This function now sends the job_input it receives DIRECTLY as the payload,
+    which matches the official documentation.
     """
     fal_key = os.environ.get("FAL_KEY")
     if not fal_key:
         raise ValueError("FAL_KEY environment variable not set on RunPod.")
 
     is_img2img = 'image_urls' in job_input and job_input.get('image_urls')
-    
-    # --- THIS IS THE FINAL, CORRECT PAYLOAD STRUCTURE ---
+
     if is_img2img:
         api_url = IMAGE_TO_IMAGE_URL
-        payload = {
-            "prompt": job_input.get('prompt'),
-            "image_urls": [ job_input.get('image_url') ]
-        }
     else:
         api_url = TEXT_TO_IMAGE_URL
-        payload = {
-            "prompt": job_input.get('prompt'),
-            "width": job_input.get('width', 1024),
-            "height": job_input.get('height', 1024)
-        }
     
-    # NOTE: The fal.ai API expects the payload to be flat. The "/v4/..." endpoints
-    # are a newer, simpler style that do not use the nested "input" object.
-    payload["enable_safety_checker"] = False
+    # --- THIS IS THE FINAL FIX ---
+    # The payload is the job_input itself. No more nesting.
+    payload = job_input
+    
     headers = {"Authorization": f"Key {fal_key}", "Content-Type": "application/json"}
     
-    print(f"Sending request to: {api_url} with payload: {payload}")
-    response = requests.post(api_url, json=payload, headers=headers, timeout=120)
-    response.raise_for_status()
+    print(f"--- Sending FINAL PAYLOAD to: {api_url} ---")
+    print(f"--- PAYLOAD CONTENT: {payload} ---")
     
+    response = requests.post(api_url, json=payload, headers=headers, timeout=180)
+
+    # ... (the rest of the error handling and response processing is the same and correct)
+    if not response.ok:
+        error_status = response.status_code
+        error_reason = response.reason
+        try:
+            error_detail = response.json()
+        except Exception:
+            error_detail = response.text
+        raise Exception(f"Failed to call fal.ai API. Status: {error_status} {error_reason}. Details: {error_detail}")
+
     data = response.json()
-    
-    # Standardize image URL extraction
     image_url = None
     if "images" in data and data["images"]:
         image_url = data["images"][0].get("url")
