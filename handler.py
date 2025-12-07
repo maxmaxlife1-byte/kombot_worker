@@ -3,7 +3,11 @@
 import os
 import requests
 import runpod
+# --- THIS IS THE NEW DEBUG LINE ---
+print("--- RUNNING HANDLER.PY VERSION 2.0 (with corrected URLs) ---")
+# ------------------------------------
 
+# The MODEL_REGISTRY is the corrected version from our last message
 # --- THE FINAL, EXPANDED MODEL REGISTRY ---
 # This dictionary is the "source of truth" for all models the bot can use.
 MODEL_REGISTRY = {
@@ -119,4 +123,5 @@ def handler(job):
 
 # Starts the worker as per the official RunPod guide.
 runpod.serverless.start({"handler": handler})
+
 
