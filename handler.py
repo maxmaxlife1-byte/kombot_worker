@@ -8,20 +8,20 @@ import runpod
 # This dictionary is the "source of truth" for all models the bot can use.
 MODEL_REGISTRY = {
     "z_image_turbo_text": {
-        "url": "https://fal.run/fal-ai/z-image/turbo/text-to-image",
+        "url": "https://fal.run/fal-ai/z-image/turbo",
         "type": "text-to-image"
     },
     "z_image_turbo_edit": {
-        "url": "https://fal.run/fal-ai/z-image/turbo/image-to-image",
+        "url": "https://fal.run/fal-ai/z-image/turbo",
         "type": "image-to-image",
         "image_key": "image_url" # This model expects a single URL with the singular key
     },
     "seedream_v4_text": {
-        "url": "https://fal.run/fal-ai/bytedance/seedream/v4/text-to-image",
+        "url": "https://fal.run/fal-ai/bytedance/seedream/v4.5/text-to-image",
         "type": "text-to-image"
     },
     "seedream_v4_edit": {
-        "url": "https://fal.run/fal-ai/bytedance/seedream/v4/edit",
+        "url": "https://fal.run/fal-ai/bytedance/seedream/v4.5/edit",
         "type": "image-to-image",
         "image_key": "image_urls" # This model expects a list with the plural key
     },
@@ -119,3 +119,4 @@ def handler(job):
 
 # Starts the worker as per the official RunPod guide.
 runpod.serverless.start({"handler": handler})
+
